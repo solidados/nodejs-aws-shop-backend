@@ -14,6 +14,7 @@ export const handler: APIGatewayProxyHandler = async (
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": "Content-Type",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ message: "Product ID is required" }),
@@ -28,6 +29,7 @@ export const handler: APIGatewayProxyHandler = async (
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": "Content-Type",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ message: "Product not found" }),
@@ -39,6 +41,7 @@ export const handler: APIGatewayProxyHandler = async (
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET",
+      "Access-Control-Allow-Headers": "Content-Type",
       "Content-Type": "application/json",
     },
     body: JSON.stringify(product),
