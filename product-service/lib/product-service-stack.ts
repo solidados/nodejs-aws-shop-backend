@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
+import { products } from "../mock/products";
 
 export class ProductServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -14,6 +15,9 @@ export class ProductServiceStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_20_X,
         code: lambda.Code.fromAsset("lambda-functions"),
         handler: "getProductsList.handler",
+        environment: {
+          MOCK_PRODUCTS: JSON.stringify(products),
+        },
       },
     );
 
@@ -24,6 +28,9 @@ export class ProductServiceStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_20_X,
         code: lambda.Code.fromAsset("lambda-functions"),
         handler: "getProductById.handler",
+        environment: {
+          MOCK_PRODUCTS: JSON.stringify(products),
+        },
       },
     );
 
