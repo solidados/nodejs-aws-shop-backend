@@ -3,11 +3,12 @@ import {
   APIGatewayProxyHandler,
   APIGatewayProxyResult,
 } from "aws-lambda";
-import { products } from "../mock/products";
+import { IProduct } from "../types/product.interface";
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
+  const products: IProduct[] = JSON.parse(process.env.MOCK_PRODUCTS ?? "[]");
   if (!products.length) {
     return {
       statusCode: 404,

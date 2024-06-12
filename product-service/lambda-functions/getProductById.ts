@@ -1,12 +1,12 @@
 import { APIGatewayProxyResult } from "aws-lambda";
 import { APIGatewayProxyEvent, APIGatewayProxyHandler } from "aws-lambda";
-import { products } from "../mock/products";
+import { IProduct } from "../types/product.interface";
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-  const { pathParameters } = event;
-  const id = pathParameters?.id;
+  const products: IProduct[] = JSON.parse(process.env.MOCK_PRODUCTS ?? "[]");
+  const id = event.pathParameters?.id;
 
   if (!id) {
     return {
