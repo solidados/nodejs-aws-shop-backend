@@ -2,7 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
-import { products } from "../mock/products";
+import { products } from "../lambda-functions/products";
 
 export class ProductServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
