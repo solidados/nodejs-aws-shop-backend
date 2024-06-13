@@ -1,6 +1,9 @@
-import { APIGatewayProxyResult } from "aws-lambda";
-import { APIGatewayProxyEvent, APIGatewayProxyHandler } from "aws-lambda";
-import { IProduct } from "../types/product.interface";
+import {
+  APIGatewayProxyEvent,
+  APIGatewayProxyHandler,
+  APIGatewayProxyResult,
+} from "aws-lambda";
+import { IProduct } from "./product.interface";
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent,

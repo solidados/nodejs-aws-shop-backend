@@ -3,7 +3,7 @@ import {
   APIGatewayProxyHandler,
   APIGatewayProxyResult,
 } from "aws-lambda";
-import { IProduct } from "../types/product.interface";
+import { IProduct } from "./product.interface";
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent,
