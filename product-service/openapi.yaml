@@ -4,7 +4,7 @@ info:
   description: API for managing products
   version: 1.0.0
 servers:
-  - url: https://7yqkyib6sc.execute-api.eu-central-1.amazonaws.com/prod  # Замените на реальный URL вашего API
+  - url: https://7yqkyib6sc.execute-api.eu-central-1.amazonaws.com/prod
 
 paths:
   /products:
