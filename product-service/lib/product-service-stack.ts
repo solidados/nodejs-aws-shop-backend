@@ -14,6 +14,8 @@ export class ProductServiceStack extends cdk.Stack {
       tableName: "products_table",
       partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "title", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PROVISIONED,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     const stocksTable = new dynamodb.Table(this, "StocksTable", {
@@ -22,6 +24,8 @@ export class ProductServiceStack extends cdk.Stack {
         name: "products_id",
         type: dynamodb.AttributeType.STRING,
       },
+      billingMode: dynamodb.BillingMode.PROVISIONED,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     const dynamoPolicy = new iam.PolicyStatement({
@@ -40,7 +44,7 @@ export class ProductServiceStack extends cdk.Stack {
       "GetProductsListHandler",
       {
         runtime: lambda.Runtime.NODEJS_16_X,
-        code: lambda.Code.fromAsset("lambda-types"),
+        code: lambda.Code.fromAsset("lambda-functions/handlers"),
         handler: "getProductsList.handler",
         environment: {
           PRODUCTS_TABLE_NAME: productsTable.tableName,
@@ -54,7 +58,7 @@ export class ProductServiceStack extends cdk.Stack {
       "GetProductByIdHandler",
       {
         runtime: lambda.Runtime.NODEJS_16_X,
-        code: lambda.Code.fromAsset("lambda-types"),
+        code: lambda.Code.fromAsset("lambda-functions/handlers"),
         handler: "getProductById.handler",
         environment: {
           PRODUCTS_TABLE_NAME: stocksTable.tableName,
@@ -86,7 +90,7 @@ export class ProductServiceStack extends cdk.Stack {
 
     const fillTablesFunction = new lambda.Function(this, "FillTablesHandler", {
       runtime: lambda.Runtime.NODEJS_16_X,
-      code: lambda.Code.fromAsset("lambda-types"),
+      code: lambda.Code.fromAsset("lambda-functions/handlers"),
       handler: "fillTables.handler",
       environment: {
         PRODUCTS_TABLE_NAME: productsTable.tableName,
