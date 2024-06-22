@@ -4,7 +4,7 @@ import {
   APIGatewayProxyResult,
 } from "aws-lambda";
 import * as AWS from "aws-sdk";
-import { IProduct } from "./product.interface";
+import { IProduct } from "../types/product.interface";
 import { products } from "../products";
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import {
