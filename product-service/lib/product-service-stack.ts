@@ -2,37 +2,65 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
-import { products } from "../lambda-functions/products";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 export class ProductServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const productsTable = new dynamodb.Table(this, "ProductsTable", {
+      tableName: "products_table",
+      partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "title", type: dynamodb.AttributeType.STRING },
+    });
+
+    const stocksTable = new dynamodb.Table(this, "StocksTable", {
+      tableName: "stocks_table",
+      partitionKey: {
+        name: "products_id",
+        type: dynamodb.AttributeType.STRING,
+      },
+    });
+
+    const dynamoPolicy = new iam.PolicyStatement({
+      actions: [
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+      ],
+      resources: [productsTable.tableArn, stocksTable.tableArn],
+    });
+
     const getProductsListFunction = new lambda.Function(
       this,
       "GetProductsListHandler",
       {
-        runtime: lambda.Runtime.NODEJS_20_X,
+        runtime: lambda.Runtime.NODEJS_16_X,
         code: lambda.Code.fromAsset("lambda-functions"),
         handler: "getProductsList.handler",
         environment: {
-          MOCK_PRODUCTS: JSON.stringify(products),
+          PRODUCTS_TABLE_NAME: productsTable.tableName,
         },
       },
     );
+    getProductsListFunction.addToRolePolicy(dynamoPolicy);
 
     const getProductByIdFunction = new lambda.Function(
       this,
       "GetProductByIdHandler",
       {
-        runtime: lambda.Runtime.NODEJS_20_X,
+        runtime: lambda.Runtime.NODEJS_16_X,
         code: lambda.Code.fromAsset("lambda-functions"),
         handler: "getProductById.handler",
         environment: {
-          MOCK_PRODUCTS: JSON.stringify(products),
+          PRODUCTS_TABLE_NAME: stocksTable.tableName,
         },
       },
     );
+    getProductByIdFunction.addToRolePolicy(dynamoPolicy);
 
     const api = new apigateway.RestApi(this, "ProductsApi", {
       restApiName: "Products Service",
@@ -54,5 +82,16 @@ export class ProductServiceStack extends cdk.Stack {
       "GET",
       new apigateway.LambdaIntegration(getProductByIdFunction),
     );
+
+    const fillTablesFunction = new lambda.Function(this, "FillTablesHandler", {
+      runtime: lambda.Runtime.NODEJS_16_X,
+      code: lambda.Code.fromAsset("lambda-functions"),
+      handler: "fillTables.handler",
+      environment: {
+        PRODUCTS_TABLE_NAME: productsTable.tableName,
+        STOCKS_TABLE_NAME: stocksTable.tableName,
+      },
+    });
+    fillTablesFunction.addToRolePolicy(dynamoPolicy);
   }
 }
