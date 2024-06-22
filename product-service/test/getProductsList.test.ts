@@ -3,7 +3,7 @@ import {
   APIGatewayProxyResult,
   Context,
 } from "aws-lambda";
-import { handler } from "../lambda-functions/getProductsList";
+import { handler } from "../lambda-functions/handlers/getProductsList";
 import { products } from "../lambda-functions/products";
 
 describe("getProductsList lambda function", (): void => {
