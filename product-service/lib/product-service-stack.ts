@@ -4,6 +4,7 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as iam from "aws-cdk-lib/aws-iam";
+import { HttpMethod } from "../lambda-functions/types/httpMethods.enum";
 
 export class ProductServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -39,7 +40,7 @@ export class ProductServiceStack extends cdk.Stack {
       "GetProductsListHandler",
       {
         runtime: lambda.Runtime.NODEJS_16_X,
-        code: lambda.Code.fromAsset("lambda-functions"),
+        code: lambda.Code.fromAsset("lambda-types"),
         handler: "getProductsList.handler",
         environment: {
           PRODUCTS_TABLE_NAME: productsTable.tableName,
@@ -53,7 +54,7 @@ export class ProductServiceStack extends cdk.Stack {
       "GetProductByIdHandler",
       {
         runtime: lambda.Runtime.NODEJS_16_X,
-        code: lambda.Code.fromAsset("lambda-functions"),
+        code: lambda.Code.fromAsset("lambda-types"),
         handler: "getProductById.handler",
         environment: {
           PRODUCTS_TABLE_NAME: stocksTable.tableName,
@@ -73,19 +74,19 @@ export class ProductServiceStack extends cdk.Stack {
 
     const productsResource = api.root.addResource("products");
     productsResource.addMethod(
-      "GET",
+      HttpMethod.GET,
       new apigateway.LambdaIntegration(getProductsListFunction),
     );
 
     const productResource = productsResource.addResource("{id}");
     productResource.addMethod(
-      "GET",
+      HttpMethod.GET,
       new apigateway.LambdaIntegration(getProductByIdFunction),
     );
 
     const fillTablesFunction = new lambda.Function(this, "FillTablesHandler", {
       runtime: lambda.Runtime.NODEJS_16_X,
-      code: lambda.Code.fromAsset("lambda-functions"),
+      code: lambda.Code.fromAsset("lambda-types"),
       handler: "fillTables.handler",
       environment: {
         PRODUCTS_TABLE_NAME: productsTable.tableName,
