@@ -1,4 +1,4 @@
-import { IProduct } from "./handlers/product.interface";
+import { IProduct } from "./types/product.interface";
 import { uuid } from "uuidv4";
 
 export const products: IProduct[] = [

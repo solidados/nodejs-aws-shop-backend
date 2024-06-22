@@ -4,3 +4,5 @@ export interface IProduct {
   description: string;
   price: number;
 }
+
+export type ProductInfo = Omit<IProduct, "id">;
