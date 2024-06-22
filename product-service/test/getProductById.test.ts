@@ -5,7 +5,7 @@ import {
 } from "aws-lambda";
 import { handler } from "../lambda-functions/handlers/getProductById";
 import { products } from "../lambda-functions/products";
-import { IProduct } from "../lambda-functions/handlers/product.interface";
+import { IProduct } from "../lambda-functions/types/product.interface";
 
 describe("getProductById lambda function", (): void => {
   beforeEach((): void => {
