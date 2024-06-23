@@ -4,22 +4,33 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as iam from "aws-cdk-lib/aws-iam";
-import { HttpMethod } from "../lambda-functions/types/httpMethods.enum";
+import { HttpMethod } from "../lambda-functions/httpMethods.enum";
 
 export class ProductServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const productsTable = new dynamodb.Table(this, "ProductsTable", {
-      tableName: "products_table",
+    const getTable = (
+      tableName: string,
+      tableProps: dynamodb.TableProps,
+    ): dynamodb.ITable => {
+      try {
+        return dynamodb.Table.fromTableName(this, `${tableName}Ref`, tableName);
+      } catch {
+        return new dynamodb.Table(this, tableName, tableProps);
+      }
+    };
+
+    const productsTable = getTable("products", {
+      tableName: "products",
       partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "title", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PROVISIONED,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    const stocksTable = new dynamodb.Table(this, "StocksTable", {
-      tableName: "stocks_table",
+    const stocksTable = getTable("stocks", {
+      tableName: "stocks",
       partitionKey: {
         name: "products_id",
         type: dynamodb.AttributeType.STRING,
@@ -44,7 +55,7 @@ export class ProductServiceStack extends cdk.Stack {
       "GetProductsListHandler",
       {
         runtime: lambda.Runtime.NODEJS_16_X,
-        code: lambda.Code.fromAsset("lambda-functions/handlers"),
+        code: lambda.Code.fromAsset("lambda-functions"),
         handler: "getProductsList.handler",
         environment: {
           PRODUCTS_TABLE_NAME: productsTable.tableName,
@@ -58,14 +69,29 @@ export class ProductServiceStack extends cdk.Stack {
       "GetProductByIdHandler",
       {
         runtime: lambda.Runtime.NODEJS_16_X,
-        code: lambda.Code.fromAsset("lambda-functions/handlers"),
+        code: lambda.Code.fromAsset("lambda-functions"),
         handler: "getProductById.handler",
         environment: {
-          PRODUCTS_TABLE_NAME: stocksTable.tableName,
+          PRODUCTS_TABLE_NAME: productsTable.tableName,
         },
       },
     );
     getProductByIdFunction.addToRolePolicy(dynamoPolicy);
+
+    const createProductFunction = new lambda.Function(
+      this,
+      "CreateProductHandler",
+      {
+        runtime: lambda.Runtime.NODEJS_16_X,
+        code: lambda.Code.fromAsset("lambda-functions"),
+        handler: "createProduct.handler",
+        environment: {
+          PRODUCTS_TABLE_NAME: productsTable.tableName,
+          STOCKS_TABLE_NAME: stocksTable.tableName,
+        },
+      },
+    );
+    createProductFunction.addToRolePolicy(dynamoPolicy);
 
     const api = new apigateway.RestApi(this, "ProductsApi", {
       restApiName: "Products Service",
@@ -88,15 +114,9 @@ export class ProductServiceStack extends cdk.Stack {
       new apigateway.LambdaIntegration(getProductByIdFunction),
     );
 
-    const fillTablesFunction = new lambda.Function(this, "FillTablesHandler", {
-      runtime: lambda.Runtime.NODEJS_16_X,
-      code: lambda.Code.fromAsset("lambda-functions/handlers"),
-      handler: "fillTables.handler",
-      environment: {
-        PRODUCTS_TABLE_NAME: productsTable.tableName,
-        STOCKS_TABLE_NAME: stocksTable.tableName,
-      },
-    });
-    fillTablesFunction.addToRolePolicy(dynamoPolicy);
+    productsResource.addMethod(
+      HttpMethod.POST,
+      new apigateway.LambdaIntegration(createProductFunction),
+    );
   }
 }
