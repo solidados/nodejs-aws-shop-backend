@@ -19,12 +19,14 @@ const PRODUCTS_TABLE_NAME: string = process.env.PRODUCTS_TABLE_NAME!;
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
+  console.log("Received request:", event);
+
   try {
     const id: string | undefined = event.pathParameters?.id;
     let product: IProduct | undefined;
 
     if (id) {
-      product = products.find((product): boolean => product.id === id);
+      product = products.find((product: IProduct): boolean => product.id === id);
     }
 
     if (!id || !product) {
@@ -38,11 +40,11 @@ export const handler: APIGatewayProxyHandler = async (
     }
 
     if (!id) {
-      throw new BadRequestError("Product ID is required");
+      throw new BadRequestError();
     }
 
     if (!product) {
-      throw new NotFoundError("Product not found");
+      throw new NotFoundError();
     }
 
     return {
@@ -56,6 +58,7 @@ export const handler: APIGatewayProxyHandler = async (
       body: JSON.stringify(product),
     };
   } catch (error: any) {
+    console.error("Error retrieving product:", error);
     return handleAPIGatewayError(error);
   }
 };

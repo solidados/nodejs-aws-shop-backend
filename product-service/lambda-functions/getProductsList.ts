@@ -13,13 +13,15 @@ const PRODUCTS_TABLE_NAME: string = process.env.PRODUCTS_TABLE_NAME!;
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
+  console.log("Received request:", event);
+
   try {
     const params = { TableName: PRODUCTS_TABLE_NAME };
     const result = await dynamoDb.scan(params).promise();
     const products: IProduct[] = result.Items as IProduct[];
 
     if (!products.length) {
-      throw new NotFoundError("No products found");
+      throw new NotFoundError();
     }
 
     return {
@@ -33,6 +35,7 @@ export const handler: APIGatewayProxyHandler = async (
       body: JSON.stringify(products),
     };
   } catch (error: any) {
+    console.error("Error retrieving products list:", error);
     return handleAPIGatewayError(error);
   }
 };
