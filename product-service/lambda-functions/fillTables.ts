@@ -1,11 +1,12 @@
 import * as AWS from "aws-sdk";
-import { products } from "../products";
+import { products } from "./products";
 
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
-const PRODUCTS_TABLE_NAME: string = process.env.PRODUCTS_TABLE_NAME!;
-const STOCKS_TABLE_NAME: string = process.env.STOCKS_TABLE_NAME!;
+AWS.config.update({ region: "eu-central-1" });
+const dynamoDb = new AWS.DynamoDB.DocumentClient({ region: "eu-central-1" });
+const PRODUCTS_TABLE_NAME: string = "products";
+const STOCKS_TABLE_NAME: string = "stocks";
 
-export const handler = async (): Promise<void> => {
+export const fillTables = async (): Promise<void> => {
   try {
     for (const product of products) {
       await dynamoDb
@@ -30,3 +31,5 @@ export const handler = async (): Promise<void> => {
     console.error(error.message);
   }
 };
+
+fillTables();
