@@ -3,9 +3,9 @@ import {
   APIGatewayProxyResult,
   Context,
 } from "aws-lambda";
-import { handler } from "../lambda-functions/handlers/getProductById";
+import { handler } from "../lambda-functions/getProductById";
 import { products } from "../lambda-functions/products";
-import { IProduct } from "../lambda-functions/types/product.interface";
+import { IProduct } from "../lambda-functions/product.interface";
 
 describe("getProductById lambda function", (): void => {
   beforeEach((): void => {
