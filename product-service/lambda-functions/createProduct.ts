@@ -1,21 +1,31 @@
 import * as AWS from "aws-sdk";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-// import { handleAPIGatewayError } from "./errorHandler";
+
 import { ProductInfo } from "./product.interface";
 import { v4 } from "uuid";
 
+import { handleAPIGatewayError } from "./errorHandler";
+import { BadRequestError } from "./errorHandler";
+
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
-const productsTableName = process.env.PRODUCTS_TABLE_NAME || "products";
-const stocksTableName = process.env.STOCKS_TABLE_NAME || "stocks";
+const productsTableName: string = process.env.PRODUCTS_TABLE_NAME || "products";
+const stocksTableName: string = process.env.STOCKS_TABLE_NAME || "stocks";
 
 export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
+  console.log("Received request:", event);
+  
   try {
     const body = JSON.parse(event.body || "{}") as ProductInfo;
-    const id = v4();
-    const { title, description, price, count } = body;
+    const id: string = v4();
+    const { title, description, price, count = 0 } = body;
+    
+    if (!title || !description || !price) {
+      throw new BadRequestError();
+    }
+    console.log("Here code continue to work if no ERROR");
 
     const productParams: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: productsTableName,
@@ -27,8 +37,12 @@ export const handler = async (
       Item: { product_id: id, count },
     };
 
-    await dynamodb.put(productParams).promise();
-    await dynamodb.put(stockParams).promise();
+    const transactParams: AWS.DynamoDB.DocumentClient.TransactWriteItemsInput =
+      {
+        TransactItems: [{ Put: productParams }, { Put: stockParams }],
+      };
+
+    await dynamodb.transactWrite(transactParams).promise();
 
     return {
       statusCode: 200,
@@ -41,15 +55,7 @@ export const handler = async (
       body: JSON.stringify({ message: "Product created successfully" }),
     };
   } catch (error: any) {
-    return {
-      statusCode: 500,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ message: error.message }),
-    };
+    console.error("Error creating product:", error);
+    return handleAPIGatewayError(error);
   }
 };
