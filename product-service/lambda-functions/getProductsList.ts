@@ -4,7 +4,7 @@ import {
   APIGatewayProxyResult,
 } from "aws-lambda";
 import * as AWS from "aws-sdk";
-import { IProduct } from "../types/product.interface";
+import { IProduct } from "./product.interface";
 import { NotFoundError, handleAPIGatewayError } from "./errorHandler";
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
