@@ -50,6 +50,11 @@ export class ProductServiceStack extends cdk.Stack {
       resources: [productsTable.tableArn, stocksTable.tableArn],
     });
 
+    const productsEnvironment = {
+      PRODUCTS_TABLE_NAME: productsTable.tableName,
+      STOCKS_TABLE_NAME: stocksTable.tableName,
+    };
+
     const getProductsListFunction = new lambda.Function(
       this,
       "GetProductsListHandler",
@@ -57,9 +62,7 @@ export class ProductServiceStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_16_X,
         code: lambda.Code.fromAsset("lambda-functions"),
         handler: "getProductsList.handler",
-        environment: {
-          PRODUCTS_TABLE_NAME: productsTable.tableName,
-        },
+        environment: productsEnvironment,
       },
     );
     getProductsListFunction.addToRolePolicy(dynamoPolicy);
@@ -71,9 +74,7 @@ export class ProductServiceStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_16_X,
         code: lambda.Code.fromAsset("lambda-functions"),
         handler: "getProductById.handler",
-        environment: {
-          PRODUCTS_TABLE_NAME: productsTable.tableName,
-        },
+        environment: productsEnvironment,
       },
     );
     getProductByIdFunction.addToRolePolicy(dynamoPolicy);
@@ -85,10 +86,7 @@ export class ProductServiceStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_16_X,
         code: lambda.Code.fromAsset("lambda-functions"),
         handler: "createProduct.handler",
-        environment: {
-          PRODUCTS_TABLE_NAME: productsTable.tableName,
-          STOCKS_TABLE_NAME: stocksTable.tableName,
-        },
+        environment: productsEnvironment,
       },
     );
     createProductFunction.addToRolePolicy(dynamoPolicy);
