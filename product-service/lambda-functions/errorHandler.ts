@@ -4,7 +4,10 @@ import { ErrorResponse } from "./error.interface";
 const errorMap: Record<string, ErrorResponse> = {
   NotFoundError: { statusCode: 404, message: "404 Not found" },
   BadRequestError: { statusCode: 400, message: "400 Bad request" },
-  InternalServerError: { statusCode: 500, message: "500 Internal server error" },
+  InternalServerError: {
+    statusCode: 500,
+    message: "500 Internal server error",
+  },
 };
 
 export function handleAPIGatewayError(error: any): APIGatewayProxyResult {
@@ -45,8 +48,8 @@ export class NotFoundError extends Error {
 }
 
 export class BadRequestError extends Error {
-  constructor() {
-    super("Bad request error");
+  constructor(message?: string) {
+    super(message || "Bad request error");
     this.name = "BadRequestError";
   }
 }
