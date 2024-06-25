@@ -3,7 +3,11 @@ export interface IProduct {
   title: string;
   description: string;
   price: number;
-  count?: number;
 }
 
-export type ProductInfo = Omit<IProduct, "id">;
+export interface IStock {
+  product_id: string;
+  count: number | undefined;
+}
+
+export type ProductInfo = Omit<IProduct, "id"> & { count?: number };
