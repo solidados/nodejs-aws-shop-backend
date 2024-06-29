@@ -13,6 +13,21 @@ import { handleAPIGatewayError } from "./helpers/errorHandler";
 
 const s3Client: S3Client = new S3Client({});
 
+const parseCSV = (stream: Readable): Promise<ProductWithStockType[]> => {
+  return new Promise((resolve, reject): void => {
+    const products: ProductWithStockType[] = [];
+    stream
+      .pipe(csvParser({ separator: ";" }))
+      .on("data", (data): void => {
+        products.push(data);
+        console.log(data);
+      })
+      .on("end", () => resolve(products))
+      .on("error", reject);
+  });
+};
+
+/** Get Function */
 const getObject = async (bucket: string, key: string) => {
   const command: GetObjectCommand = new GetObjectCommand({
     Bucket: bucket,
@@ -21,17 +36,7 @@ const getObject = async (bucket: string, key: string) => {
   return s3Client.send(command);
 };
 
-const parseCSV = (stream: Readable): Promise<ProductWithStockType[]> => {
-  return new Promise((resolve, reject): void => {
-    const products: ProductWithStockType[] = [];
-    stream
-      .pipe(csvParser({ separator: ";" }))
-      .on("data", (data) => products.push(data))
-      .on("end", () => resolve(products))
-      .on("error", reject);
-  });
-};
-
+/** Copy Function */
 const copyObject = async (bucket: string, key: string, newKey: string) => {
   const command: CopyObjectCommand = new CopyObjectCommand({
     Bucket: bucket,
@@ -41,6 +46,7 @@ const copyObject = async (bucket: string, key: string, newKey: string) => {
   return s3Client.send(command);
 };
 
+/** Delete Function */
 const deleteObject = async (bucket: string, key: string) => {
   const command: DeleteObjectCommand = new DeleteObjectCommand({
     Bucket: bucket,
@@ -49,6 +55,7 @@ const deleteObject = async (bucket: string, key: string) => {
   return s3Client.send(command);
 };
 
+/** Lambda Function Handler */
 export const handler = async (
   event: S3Event,
 ): Promise<APIGatewayProxyResult> => {
