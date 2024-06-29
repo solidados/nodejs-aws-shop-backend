@@ -15,22 +15,42 @@ export class ImportServiceStack extends cdk.Stack {
       "import-service-s3-vedro",
     );
 
-    const importProductsFileFunction: cdk.aws_lambda.Function =
-      new lambda.Function(this, "importProductsFileFunction", {
+    const importProdFileFunction: cdk.aws_lambda.Function = new lambda.Function(
+      this,
+      "importProdFileFunction",
+      {
         runtime: lambda.Runtime.NODEJS_20_X,
         code: lambda.Code.fromAsset("lambda-functions"),
         handler: "importProductsFile.handler",
         environment: {
           BUCKET_NAME: importServiceS3Bucket.bucketName,
         },
-      });
+      },
+    );
 
-    importServiceS3Bucket.grantReadWrite(importProductsFileFunction);
+    importServiceS3Bucket.grantReadWrite(importProdFileFunction);
 
     const api = new apigateway.RestApi(this, "import-service-api", {
       restApiName: "Import Service API",
       cloudWatchRole: true,
       cloudWatchRoleRemovalPolicy: RemovalPolicy.DESTROY,
+    });
+
+    const importProductsFileResource = api.root.addResource("import");
+    const importProdFileFunctionIntegration = new apigateway.LambdaIntegration(
+      importProdFileFunction,
+    );
+    importProductsFileResource.addMethod(
+      "GET",
+      importProdFileFunctionIntegration,
+      { requestParameters: { "method.request.querystring.name": true } },
+    );
+
+    const deployment = new apigateway.Deployment(this, "Deployment", { api });
+
+    api.deploymentStage = new apigateway.Stage(this, "developmentStage", {
+      stageName: "development",
+      deployment,
     });
   }
 }
