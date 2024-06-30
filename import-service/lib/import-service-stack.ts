@@ -16,18 +16,14 @@ export class ImportServiceStack extends cdk.Stack {
       bucketName,
     );
 
-    const importProductsFile = new ImportProductsFile(
+    const importProductsFileLambda = new ImportProductsFile(
       this,
       "ImportProductsFile",
       importS3Bucket,
     );
 
-    const importFileParser = new ImportFileParser(
-      this,
-      "ImportFileParser",
-      importS3Bucket,
-    );
+    new ImportFileParser(this, "ImportFileParser", importS3Bucket);
 
-    new ApiGateway(this, "ApiGateway", importProductsFile);
+    new ApiGateway(this, "ImportServiceApi", importProductsFileLambda);
   }
 }
