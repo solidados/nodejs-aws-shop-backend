@@ -18,16 +18,11 @@ export class ImportS3Bucket {
   public readonly bucket: s3.IBucket;
 
   constructor(scope: Construct, id: string, bucketName: string) {
-    this.bucket = new s3.Bucket(scope, id, {
+    this.bucket = s3.Bucket.fromBucketName(
+      scope,
+      "ImportServiceS3Bucket",
       bucketName,
-      cors: [
-        {
-          allowedMethods: [s3.HttpMethods.PUT],
-          allowedOrigins: ["*"],
-          allowedHeaders: ["*"],
-        },
-      ],
-    });
+    );
 
     new cr.AwsCustomResource(scope, "PutCorsConfig", {
       onCreate: {
