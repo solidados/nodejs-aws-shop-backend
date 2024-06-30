@@ -16,7 +16,7 @@ export class ImportS3Bucket {
   };
   public readonly bucket: s3.IBucket;
 
-  constructor(scope: Construct, bucketName: string) {
+  constructor(scope: Construct, id: string, bucketName: string) {
     this.bucket = s3.Bucket.fromBucketName(
       scope,
       "ImportServiceS3Bucket",
