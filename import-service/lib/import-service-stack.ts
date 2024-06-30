@@ -62,8 +62,8 @@ export class ImportServiceStack extends cdk.Stack {
 
     const deployment = new apigateway.Deployment(this, "Deployment", { api });
 
-    api.deploymentStage = new apigateway.Stage(this, "developmentStage", {
-      stageName: "development",
+    api.deploymentStage = new apigateway.Stage(this, "devStage", {
+      stageName: "dev",
       deployment,
     });
   }
