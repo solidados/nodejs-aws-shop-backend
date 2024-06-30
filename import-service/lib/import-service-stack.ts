@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { RemovalPolicy } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import * as s3n from "aws-cdk-lib/aws-s3-notifications";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 
@@ -15,20 +16,34 @@ export class ImportServiceStack extends cdk.Stack {
       "import-service-s3-vedro",
     );
 
-    const importProdFileFunction: cdk.aws_lambda.Function = new lambda.Function(
-      this,
-      "importProdFileFunction",
-      {
+    const importProductsFileFunction: cdk.aws_lambda.Function =
+      new lambda.Function(this, "importProductsFileFunction", {
         runtime: lambda.Runtime.NODEJS_20_X,
         code: lambda.Code.fromAsset("lambda-functions"),
         handler: "importProductsFile.handler",
         environment: {
           BUCKET_NAME: importServiceS3Bucket.bucketName,
         },
-      },
-    );
+      });
 
-    importServiceS3Bucket.grantReadWrite(importProdFileFunction);
+    const importFileParserFunction: cdk.aws_lambda.Function =
+      new lambda.Function(this, "importFileParserFunction", {
+        runtime: lambda.Runtime.NODEJS_20_X,
+        code: lambda.Code.fromAsset("lambda-functions"),
+        handler: "importFileParser.handler",
+        environment: {
+          BUCKET_NAME: importServiceS3Bucket.bucketName,
+        },
+      });
+
+    importServiceS3Bucket.grantReadWrite(importProductsFileFunction);
+    importServiceS3Bucket.grantReadWrite(importFileParserFunction);
+
+    importServiceS3Bucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED,
+      new s3n.LambdaDestination(importFileParserFunction),
+      { prefix: "uploaded/" },
+    );
 
     const api = new apigateway.RestApi(this, "import-service-api", {
       restApiName: "Import Service API",
@@ -37,12 +52,11 @@ export class ImportServiceStack extends cdk.Stack {
     });
 
     const importProductsFileResource = api.root.addResource("import");
-    const importProdFileFunctionIntegration = new apigateway.LambdaIntegration(
-      importProdFileFunction,
-    );
+    const importProductsFileFunctionIntegration =
+      new apigateway.LambdaIntegration(importProductsFileFunction);
     importProductsFileResource.addMethod(
       "GET",
-      importProdFileFunctionIntegration,
+      importProductsFileFunctionIntegration,
       { requestParameters: { "method.request.querystring.name": true } },
     );
 
