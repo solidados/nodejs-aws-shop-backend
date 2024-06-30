@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { createErrorResponse } from "./helpers/errorHandler";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { BUCKET_NAME, REGION } from "./helpers/constatns";
+import { REGION } from "./helpers/constatns";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const handler = async (
@@ -24,15 +24,13 @@ export const handler = async (
 
   const s3Client = new S3Client({ region: REGION });
 
-  const putObjectCommand: PutObjectCommand = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
+  const putObjectCommand = new PutObjectCommand({
+    Bucket: "import-service-s3-vedro",
     Key: `uploaded/${fileName}`,
   });
 
   try {
-    const signedUrl: string = await getSignedUrl(s3Client, putObjectCommand, {
-      expiresIn: 3600,
-    });
+    const signedUrl: string = await getSignedUrl(s3Client, putObjectCommand);
     return {
       statusCode: 200,
       headers,
