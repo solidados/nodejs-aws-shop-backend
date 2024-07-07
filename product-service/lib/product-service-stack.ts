@@ -5,6 +5,8 @@ import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { HttpMethod } from "../lambda-functions/httpMethods.enum";
+import * as sqs from "aws-cdk-lib/aws-sqs";
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
 export class ProductServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -55,6 +57,17 @@ export class ProductServiceStack extends cdk.Stack {
       STOCKS_TABLE_NAME: stocksTable.tableName,
     };
 
+    /** -- SQS -- */
+    const catalogItemsQueue = new sqs.Queue(this, "CatalogItemsQueue", {
+      queueName: "CatalogItemsQueueServiceOne",
+    });
+
+    new cdk.CfnOutput(this, "CatalogItemsQueueUrl", {
+      value: catalogItemsQueue.queueArn,
+      exportName: "CatalogItemsQueueServiceOne",
+    });
+
+    /** -- Lambda Functions Creators -- */
     const getProductsListFunction = new lambda.Function(
       this,
       "GetProductsListHandler",
@@ -90,6 +103,28 @@ export class ProductServiceStack extends cdk.Stack {
       },
     );
     createProductFunction.addToRolePolicy(dynamoPolicy);
+
+    /** -- SQS Catalog Batch Process -- */
+    const catalogBatchProcessFunction = new lambda.Function(
+      this,
+      "CreateCatalogBatchProcessHandler",
+      {
+        runtime: lambda.Runtime.NODEJS_16_X,
+        code: lambda.Code.fromAsset("lambda-functions"),
+        handler: "catalogBatchProcess.handler",
+        environment: {
+          ...productsEnvironment,
+          SQS_CATALOG_URL: catalogItemsQueue.queueUrl,
+        },
+      },
+    );
+    catalogBatchProcessFunction.addToRolePolicy(dynamoPolicy);
+    catalogItemsQueue.grantConsumeMessages(catalogBatchProcessFunction);
+    catalogBatchProcessFunction.addEventSource(
+      new SqsEventSource(catalogItemsQueue, {
+        batchSize: 5,
+      }),
+    );
 
     const api = new apigateway.RestApi(this, "ProductsApi", {
       restApiName: "Products Service",
