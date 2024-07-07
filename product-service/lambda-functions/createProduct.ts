@@ -1,52 +1,24 @@
-import * as AWS from "aws-sdk";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-
 import { ProductInfo } from "./product.interface";
-import { v4 } from "uuid";
-
+import { createProduct } from "./helpers/createProduct";
 import { BadRequestError, handleAPIGatewayError } from "./errorHandler";
-
-const dynamodb = new AWS.DynamoDB.DocumentClient();
-
-const productsTableName: string = process.env.PRODUCTS_TABLE_NAME || "products";
-const stocksTableName: string = process.env.STOCKS_TABLE_NAME || "stocks";
 
 export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-  console.log("Received request:", event);
-
   try {
     const body = JSON.parse(event.body || "{}") as ProductInfo;
-    console.log("Here code continue to work if no ERROR", body);
+    const { title, description, price, count } = body;
 
     if (!body) {
       throw new BadRequestError();
     }
 
-    const id: string = v4();
-    const { title, description, price, count } = body;
-
     if (!title || !description || !price) {
       throw new BadRequestError("Requires: Title, Description, Price");
     }
 
-    const productParams: AWS.DynamoDB.DocumentClient.PutItemInput = {
-      TableName: productsTableName,
-      Item: { id, title, description, price },
-    };
-
-    const stockParams: AWS.DynamoDB.DocumentClient.PutItemInput = {
-      TableName: stocksTableName,
-      Item: { product_id: id, count: 0 },
-    };
-
-    const transactParams: AWS.DynamoDB.DocumentClient.TransactWriteItemsInput =
-      {
-        TransactItems: [{ Put: productParams }, { Put: stockParams }],
-      };
-
-    await dynamodb.transactWrite(transactParams).promise();
+    await createProduct(body);
 
     return {
       statusCode: 200,
