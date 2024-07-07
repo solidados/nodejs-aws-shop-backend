@@ -3,7 +3,7 @@ import { ProductWithStockType } from "./types/productWithStock.interface";
 
 const sqsClient = new SQSClient({});
 
-export const noticeLambda = async (
+export const sqsMessageCommander = async (
   products: ProductWithStockType[],
 ): Promise<void> => {
   const messageCommand = new SendMessageCommand({

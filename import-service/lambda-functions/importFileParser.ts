@@ -10,7 +10,7 @@ import * as csvParser from "csv-parser";
 import { ProductWithStockType } from "./helpers/types/productWithStock.interface";
 import { Readable } from "stream";
 import { handleAPIGatewayError } from "./helpers/errorHandler";
-import { noticeLambda } from "./helpers/sqsMessageCommander";
+import { sqsMessageCommander } from "./helpers/sqsMessageCommander";
 
 const s3Client: S3Client = new S3Client({});
 
@@ -92,7 +92,7 @@ export const handler = async (
       console.log("File deleted from uploaded");
       console.log(`Object ${key} was successfully moved to parsed folder`);
 
-      await noticeLambda(productsFromCSV);
+      await sqsMessageCommander(productsFromCSV);
     } catch (error) {
       console.error("Error processing object from S3:", error);
       return handleAPIGatewayError(error);
