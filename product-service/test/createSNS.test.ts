@@ -34,10 +34,10 @@ describe("createSNS", (): void => {
     
     expect(callArgs).toEqual({
       Message: `New product created:
-        Product: ${product.title}
-        Price: ${product.price},
-        Description: ${product.description},
-        Count: ${product.count}`,
+Product: ${product.title}
+Price: ${product.price},
+Description: ${product.description},
+Count: ${product.count}`,
       MessageAttributes: {
         price: {
           DataType: "Number",
