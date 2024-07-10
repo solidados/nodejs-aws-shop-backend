@@ -7,7 +7,7 @@ interface ErrorResponse {
 
 const errorMap: Record<string, ErrorResponse> = {
   NotFoundError: { statusCode: 404, message: "404 Not found" },
-  BadRequestError: { statusCode: 400, message: "400 Bad request" },
+  BadRequestError: { statusCode: 400, message: "Invalid product data" },
   InternalServerError: {
     statusCode: 500,
     message: "500 Internal server error",
