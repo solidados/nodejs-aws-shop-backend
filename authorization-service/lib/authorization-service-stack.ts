@@ -1,16 +1,14 @@
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as cdk from "aws-cdk-lib";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import { Construct } from "constructs";
+import { AuthorizationLambdaClass } from "./utils/AuthorizationLambda.class";
 
 export class AuthorizationServiceStack extends cdk.Stack {
+  handler: lambda.IFunction;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
-
-    // example resource
-    // const queue = new sqs.Queue(this, 'AuthorizationServiceQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    new AuthorizationLambdaClass(this, 'AuthorizationHandler');
   }
 }
