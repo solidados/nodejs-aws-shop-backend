@@ -21,7 +21,7 @@ export class ApiGateway extends Construct {
       lambdaArn,
     );
 
-    const api = new apigateway.RestApi(scope, id, {
+    const api = new apigateway.RestApi(this, id, {
       restApiName: "Import Service API",
       cloudWatchRole: true,
       cloudWatchRoleRemovalPolicy: RemovalPolicy.DESTROY,
@@ -42,13 +42,6 @@ export class ApiGateway extends Construct {
       handler: authorizerLambdaFn,
     });
 
-    const responseHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers":
-        "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-      "Access-Control-Allow-Methods": "OPTIONS,GET,PUT",
-    };
-
     importProductsFileResource.addMethod(
       "GET",
       importProductsFileFunctionIntegration,
@@ -58,6 +51,20 @@ export class ApiGateway extends Construct {
         authorizer,
       },
     );
+
+    const deployment = new apigateway.Deployment(this, "Deployment", { api });
+
+    api.deploymentStage = new apigateway.Stage(this, "devStage", {
+      stageName: "dev",
+      deployment,
+    });
+
+    const responseHeaders = {
+      "Access-Control-Allow-Origin": "'*'",
+      "Access-Control-Allow-Headers":
+        "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+      "Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE'",
+    };
 
     api.addGatewayResponse("GatewayResponseUnauthorized", {
       type: apigateway.ResponseType.UNAUTHORIZED,
@@ -69,13 +76,6 @@ export class ApiGateway extends Construct {
       type: apigateway.ResponseType.ACCESS_DENIED,
       responseHeaders,
       statusCode: "403",
-    });
-
-    const deployment = new apigateway.Deployment(scope, "Deployment", { api });
-
-    api.deploymentStage = new apigateway.Stage(scope, "devStage", {
-      stageName: "dev",
-      deployment,
     });
   }
 }
