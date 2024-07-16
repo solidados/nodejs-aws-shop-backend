@@ -59,7 +59,7 @@ const deleteObject = async (bucket: string, key: string) => {
 /** Lambda Function Handler */
 export const handler = async (
   event: S3Event,
-): Promise<APIGatewayProxyResult> => {
+): Promise<void> => {
   console.log("request", JSON.stringify(event));
 
   for (const record of event.Records) {
@@ -95,18 +95,18 @@ export const handler = async (
       await sqsMessageCommander(productsFromCSV);
     } catch (error) {
       console.error("Error processing object from S3:", error);
-      return handleAPIGatewayError(error);
+      handleAPIGatewayError(error);
     }
   }
 
-  return {
-    statusCode: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "*",
-      "Access-Control-Allow-Headers": "Content-Type",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ message: "Processing completed successfully" }),
-  };
+  // return {
+  //   statusCode: 200,
+  //   headers: {
+  //     "Access-Control-Allow-Origin": "*",
+  //     "Access-Control-Allow-Methods": "*",
+  //     "Access-Control-Allow-Headers": "Content-Type",
+  //     "Content-Type": "application/json",
+  //   },
+  //   body: JSON.stringify({ message: "Processing completed successfully" }),
+  // };
 };
