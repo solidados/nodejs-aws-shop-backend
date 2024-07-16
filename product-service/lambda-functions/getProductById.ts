@@ -3,50 +3,64 @@ import {
   APIGatewayProxyHandler,
   APIGatewayProxyResult,
 } from "aws-lambda";
-import { IProduct } from "./product.interface";
+import * as AWS from "aws-sdk";
+import { IProduct, IStock } from "./product.interface";
+import { handleAPIGatewayError, NotFoundError } from "./errorHandler";
+
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
+const { PRODUCTS_TABLE_NAME, STOCKS_TABLE_NAME } = process.env;
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-  const products: IProduct[] = JSON.parse(process.env.MOCK_PRODUCTS ?? "[]");
-  const id = event.pathParameters?.id;
+  const productId: string | undefined = event.pathParameters?.productId;
+  console.log("Received request:", event);
 
-  if (!id) {
-    return {
-      statusCode: 400,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ message: "Product ID is required" }),
-    };
-  }
-
-  const product = products.find((product) => product.id === id);
-
-  if (!product) {
-    return {
-      statusCode: 404,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ message: "Product not found" }),
-    };
-  }
-
-  return {
-    statusCode: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET",
-      "Access-Control-Allow-Headers": "Content-Type",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(product),
+  const productParams = {
+    TableName: PRODUCTS_TABLE_NAME!,
+    KeyConditionExpression: "id = :id",
+    ExpressionAttributeValues: { ":id": productId },
   };
+
+  const stockParams = {
+    TableName: STOCKS_TABLE_NAME!,
+    KeyConditionExpression: "product_id = :product_id",
+    ExpressionAttributeValues: { ":product_id": productId },
+  };
+
+  try {
+    const [productsItems, stocksItems] = await Promise.all([
+      dynamoDb.query(productParams).promise(),
+      dynamoDb.query(stockParams).promise(),
+    ]);
+
+    if (!productsItems.Items || !stocksItems.Items) {
+      throw new NotFoundError();
+    }
+
+    if (!productsItems.Items.length || !stocksItems.Items.length) {
+      throw new NotFoundError();
+    }
+    const product = productsItems.Items[0] as IProduct;
+    const stock = stocksItems.Items[0] as IStock;
+
+    const productJointStock = {
+      ...product,
+      counts: stock.count,
+    } as IProduct;
+
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(productJointStock),
+    };
+  } catch (error: any) {
+    console.error("Error retrieving product:", error);
+    return handleAPIGatewayError(error);
+  }
 };
