@@ -4,6 +4,7 @@ import { ImportS3Bucket } from "./utils/importS3Bucket.class";
 import { ImportProductsFile } from "./utils/importProductsFile.class";
 import { ImportFileParser } from "./utils/importFileParser.class";
 import { ApiGateway } from "./utils/apiGateway.class";
+import { CatalogItemsQueueClass } from "./utils/catalogItemsQueue.class";
 
 export class ImportServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -22,7 +23,15 @@ export class ImportServiceStack extends cdk.Stack {
       importS3Bucket,
     );
 
-    new ImportFileParser(this, "ImportFileParser", importS3Bucket);
+    const { catalogItemsQueue } = new CatalogItemsQueueClass(
+      this,
+      "catalogItemsQueueClass",
+    );
+
+    new ImportFileParser(this, "ImportFileParser", {
+      bucket: importS3Bucket,
+      catalogItemsQueue,
+    });
 
     new ApiGateway(this, "ImportServiceApi", importProductsFileLambda);
   }
